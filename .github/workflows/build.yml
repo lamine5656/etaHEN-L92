@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang lld ninja-build xz-utils cmake wget
+          sudo apt-get install -y clang lld libc++-18-dev libc++abi-18-dev ninja-build xz-utils cmake wget
 
       - name: Build hybrid SDK
         run: |
