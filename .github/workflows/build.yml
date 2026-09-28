@@ -43,6 +43,21 @@ jobs:
           test -f /opt/ps5-payload-sdk/target/include/ps5/payload.h
           test -f /opt/ps5-payload-sdk/target/include/c++/v1/cstdint
 
+      - name: Build Byepervisor hen.bin
+        run: |
+          set -x
+          cd "SourceCode/bootstrapper/Byepervisor/hen"
+          export CXX=/opt/ps5-payload-sdk/bin/prospero-clang++
+          export CC=/opt/ps5-payload-sdk/bin/prospero-clang
+          export AS=/opt/ps5-payload-sdk/bin/prospero-clang
+          export PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
+          # CFLAGS du Makefile : ajouter les includes du SDK cible
+          make CXX="$CXX" AS="$AS" \
+            CFLAGS="-std=c++20 -Wall -D_KERNEL -I./include -I/opt/ps5-payload-sdk/target/include -O2 -fno-builtin -nostartfiles -nostdlib -fno-stack-protector -fno-plt -fPIC -Wno-error=frame-address -Wno-unused-command-line-argument -target x86_64-sie-ps5 -g3" \
+            SFLAGS="-target x86_64-sie-ps5" \
+            LFLAGS="-target x86_64-sie-ps5 -Xlinker -T ./link.x -Wl,--build-id=none -nostdlib"
+          ls -la hen.bin
+
       - name: Build
         shell: bash
         env:
