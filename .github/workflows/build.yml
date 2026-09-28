@@ -49,7 +49,7 @@ jobs:
           PS5_PAYLOAD_SDK: /opt/ps5-payload-sdk
         run: |
           set -x
-          cmake -G Ninja -S SourceCode -B build \
+          cmake -G Ninja -S SourceCode -B SourceCode/build \
             -DCMAKE_TOOLCHAIN_FILE=/opt/ps5-payload-sdk/toolchain/prospero.cmake \
             -DCMAKE_BUILD_TYPE=Release \
             -DPS5_PAYLOAD_SDK=/opt/ps5-payload-sdk \
@@ -59,9 +59,9 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir -p out
-          find build -name "*.elf" -exec ls -la {} \;
-          cp build/bin/etaHEN.elf out/etaHEN-L92.bin 2>/dev/null || true
-          find build -name "*.elf" -exec cp {} out/ \; 2>/dev/null || true
+          find SourceCode/build -name "*.elf" -exec ls -la {} \;
+          cp SourceCode/bin/etaHEN.elf out/etaHEN-L92.bin 2>/dev/null || true
+          find SourceCode/build -name "*.elf" -exec cp {} out/ \; 2>/dev/null || true
           ls -la out/
 
       - name: Upload artifact
