@@ -2,11 +2,19 @@ name: Build etaHEN-L92
 
 on:
   workflow_dispatch:
+    inputs:
+      fw_version:
+        description: "Firmware cible (V_FW, ex: 0x960)"
+        required: false
+        default: "0x960"
   push:
     branches: [l92]
     paths-ignore:
       - "**.md"
       - "README*"
+
+env:
+  V_FW: ${{ github.event.inputs.fw_version || '0x960' }}
 
 jobs:
   build:
@@ -22,50 +30,30 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang lld libc++-18-dev libc++abi-18-dev ninja-build xz-utils cmake wget
+          sudo apt-get install -y ninja-build xz-utils cmake wget
 
-      - name: Build hybrid SDK
+      - name: Install pacbrew PS5 SDK (v0.30.2, époque etaHEN 2.5B)
         run: |
           set -x
-          # Toolchain + structure de PS5Dev/PS5SDK (toolchain-ps5.cmake, linker.x)
-          git clone --depth 1 https://github.com/PS5Dev/PS5SDK.git /tmp/PS5SDK-git
-          # Headers ps5/, libc++, crt, libs depuis le pacbrew SDK (v0.30.2, époque etaHEN 2.5B)
           wget -q https://github.com/ps5-payload-dev/pacbrew-repo/releases/download/v0.30.2/ps5-payload-dev.tar.gz
-
-          mkdir -p /opt/hybrid-sdk
-          cp -r /tmp/PS5SDK-git/* /opt/hybrid-sdk/
           tar xf ps5-payload-dev.tar.gz -C /tmp
-          # Superposer le contenu target/ du pacbrew (ps5 headers, c++/v1, crt, libs)
-          cp -r /tmp/opt/ps5-payload-sdk/target/include/* /opt/hybrid-sdk/include/
-          cp -r /tmp/opt/ps5-payload-sdk/target/lib/* /opt/hybrid-sdk/lib/ 2>/dev/null || true
-          # ps5/ headers aussi à la racine (certains includes utilisent "ps5/payload.h")
-          mkdir -p /opt/hybrid-sdk/ps5
-          cp -r /tmp/opt/ps5-payload-sdk/target/include/ps5/* /opt/hybrid-sdk/ps5/ 2>/dev/null || true
-
-          # Patch toolchain : utiliser libc++ de l'hôte (headers) + libs C++ cibles du pacbrew au link
-          TC=/opt/hybrid-sdk/cmake/toolchain-ps5.cmake
-          sed -i 's|-nostdinc++ |-stdlib=libc++ |' "$TC"
-          sed -i 's|set(CMAKE_EXE_LINKER_FLAGS "-fuse-ld=lld|set(CMAKE_EXE_LINKER_FLAGS "-fuse-ld=lld -nostdlib++ -L/opt/hybrid-sdk/lib -lc++ -lc++abi|' "$TC"
-
-          ls /opt/hybrid-sdk
-          test -f /opt/hybrid-sdk/cmake/toolchain-ps5.cmake
-          test -f /opt/hybrid-sdk/include/ps5/payload.h
-          test -f /opt/hybrid-sdk/include/c++/v1/cstdint
-          test -f /opt/hybrid-sdk/lib/libc++.a
+          mv /tmp/opt/ps5-payload-sdk /opt/ps5-payload-sdk
+          ls /opt/ps5-payload-sdk
+          test -f /opt/ps5-payload-sdk/toolchain/prospero.cmake
+          test -f /opt/ps5-payload-sdk/target/include/ps5/payload.h
+          test -f /opt/ps5-payload-sdk/target/include/c++/v1/cstdint
 
       - name: Build
         shell: bash
         env:
-          PS5SDK: /opt/hybrid-sdk
-          PS5_PAYLOAD_SDK: /opt/hybrid-sdk
+          PS5_PAYLOAD_SDK: /opt/ps5-payload-sdk
         run: |
           set -x
           cmake -G Ninja -S SourceCode -B build \
-            -DCMAKE_TOOLCHAIN_FILE=/opt/hybrid-sdk/cmake/toolchain-ps5.cmake \
-            -DCMAKE_C_COMPILER=clang \
-            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_TOOLCHAIN_FILE=/opt/ps5-payload-sdk/toolchain/prospero.cmake \
             -DCMAKE_BUILD_TYPE=Release \
-            -DPS5_PAYLOAD_SDK=/opt/hybrid-sdk
+            -DPS5_PAYLOAD_SDK=/opt/ps5-payload-sdk \
+            -DV_FW="$V_FW"
           cmake --build build --parallel
 
       - name: Collect artifacts
