@@ -42,10 +42,10 @@ jobs:
           mkdir -p /opt/hybrid-sdk/ps5
           cp -r /tmp/opt/ps5-payload-sdk/target/include/ps5/* /opt/hybrid-sdk/ps5/ 2>/dev/null || true
 
-          # Patch toolchain : injecter libc++ (-nostdinc++ le désactive) + libs C++ au link
+          # Patch toolchain : utiliser libc++ de l'hôte (headers) + libs C++ cibles du pacbrew au link
           TC=/opt/hybrid-sdk/cmake/toolchain-ps5.cmake
-          sed -i 's|-nostdinc++ |-nostdinc++ -isystem /opt/hybrid-sdk/include/c++/v1 |' "$TC"
-          sed -i 's|set(CMAKE_EXE_LINKER_FLAGS "-fuse-ld=lld|set(CMAKE_EXE_LINKER_FLAGS "-fuse-ld=lld -L/opt/hybrid-sdk/lib -lc++ -lc++abi|' "$TC"
+          sed -i 's|-nostdinc++ |-stdlib=libc++ |' "$TC"
+          sed -i 's|set(CMAKE_EXE_LINKER_FLAGS "-fuse-ld=lld|set(CMAKE_EXE_LINKER_FLAGS "-fuse-ld=lld -nostdlib++ -L/opt/hybrid-sdk/lib -lc++ -lc++abi|' "$TC"
 
           ls /opt/hybrid-sdk
           test -f /opt/hybrid-sdk/cmake/toolchain-ps5.cmake
