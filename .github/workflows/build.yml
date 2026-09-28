@@ -37,7 +37,7 @@ jobs:
           PS5_PAYLOAD_SDK: /opt/PS5SDK
         run: |
           set -x
-          cmake -G Ninja -S "Source Code" -B build \
+          cmake -G Ninja -S SourceCode -B build \
             -DCMAKE_TOOLCHAIN_FILE=/opt/PS5SDK/cmake/toolchain-ps5.cmake \
             -DCMAKE_C_COMPILER=clang \
             -DCMAKE_CXX_COMPILER=clang++ \
