@@ -43,7 +43,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC
 
 message("========== build: ${PROJECT_NAME} ==========")
 
-set(CMAKE_C_FLAGS "--target=x86_64-sie-ps5 -march=znver2 -DPPR -DPS5 -DPS5_FW_VERSION=${V_FW} ")
+set(CMAKE_C_FLAGS "--target=x86_64-sie-ps5 -march=znver2 -DPPR -DPS5 -DPS5_FW_VERSION=${V_FW} -isystem ${PS5_PAYLOAD_SDK}/include/c++/v1")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200112 -D__BSD_VISIBLE=1 -D__XSI_VISIBLE=500")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin -nostdlib -Wall") #  -nostartfiles
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")

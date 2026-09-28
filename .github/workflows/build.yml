@@ -60,11 +60,6 @@ jobs:
           PS5_PAYLOAD_SDK: /opt/hybrid-sdk
         run: |
           set -x
-          # Les sous-CMakeLists écrasent CMAKE_(C|CXX)_FLAGS -> injecter libc++ directement dedans
-          find SourceCode -name CMakeLists.txt -exec sed -i \
-            -e 's|set(CMAKE_C_FLAGS "|set(CMAKE_C_FLAGS "-isystem ${PS5_PAYLOAD_SDK}/include/c++/v1 "|' \
-            -e 's|set(CMAKE_CXX_FLAGS "|set(CMAKE_CXX_FLAGS "-isystem ${PS5_PAYLOAD_SDK}/include/c++/v1 "|' \
-            {} +
           cmake -G Ninja -S SourceCode -B build \
             -DCMAKE_TOOLCHAIN_FILE=/opt/hybrid-sdk/cmake/toolchain-ps5.cmake \
             -DCMAKE_C_COMPILER=clang \
