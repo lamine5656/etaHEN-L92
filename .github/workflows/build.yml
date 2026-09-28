@@ -37,14 +37,16 @@ jobs:
           PS5SDK: /opt/ps5-payload-sdk
         run: |
           set -x
-          cd "Source Code"
-          cmake --preset nix-base
-          cmake --build --preset default-build-nix
+          cmake -G Ninja -S "Source Code" -B "Source Code/build/nix-base" \
+            -DCMAKE_TOOLCHAIN_FILE="$PS5SDK/cmake/toolchain-ps5.cmake" \
+            -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build "Source Code/build/nix-base" --parallel
 
       - name: Collect artifacts
         run: |
           mkdir -p out
-          cp "Source Code/bin/unpacker.elf" out/etaHEN-L92.bin || true
+          cp "Source Code/bin/etaHEN.elf" out/etaHEN-L92.bin || true
           cp "Source Code/bin/"*.elf out/ || true
           ls -la out/
 
