@@ -1170,30 +1170,45 @@ int main(void) {
   if (!dont_load_kstuff && sys_ver.version >= 0x3000000) {
       //notify("Loading kstuff ...");
 
+      // L92 Edition: defensive kstuff loading - retry up to 3 times with backoff
+      // to ride out transient FW/timing race conditions instead of failing hard.
+      bool kstuff_loaded_ok = false;
       bool cleanup_kstuff = false;
       uint8_t* kstuff_address = get_kstuff_address(cleanup_kstuff);
 
-      if (elfldr_spawn("/", STDOUT_FILENO, kstuff_address, "kstuff")) {
-          int wait = 0;
-          bool kstuff_not_loaded = false;
-          sleep(1);
-          while ((kstuff_not_loaded = sceKernelMprotect(&buz[0], 100, 0x7) < 0)) {
-              if (wait++ > 10) {
-                  notify("Failed to load kstuff, kstuff will be unavailable");
-                  break;
-              }
-              sleep(1);
+      for (int attempt = 1; attempt <= 3 && !kstuff_loaded_ok; attempt++) {
+          if (attempt > 1) {
+              klog_printf("kstuff load retry attempt %d/3 ...\n", attempt);
+              sleep(2 * attempt); // backoff 4s, 6s
           }
 
-          if (!kstuff_not_loaded)
-              klog_puts("kstuff loaded");
+          if (elfldr_spawn("/", STDOUT_FILENO, kstuff_address, "kstuff")) {
+              int wait = 0;
+              bool kstuff_not_loaded = false;
+              sleep(1);
+              while ((kstuff_not_loaded = sceKernelMprotect(&buz[0], 100, 0x7) < 0)) {
+                  if (wait++ > 15) { // L92: 15s (was 10s) - slow FW boot tolerance
+                      break;
+                  }
+                  sleep(1);
+              }
 
-          if (cleanup_kstuff) {
-              free(kstuff_address);
+              if (!kstuff_not_loaded) {
+                  kstuff_loaded_ok = true;
+                  klog_puts("kstuff loaded");
+              }
           }
       }
-      else {
-          notify("Failed to load kstuff, kstuff will be unavailable");
+
+      if (!kstuff_loaded_ok) {
+          // L92 Edition: graceful degradation - etaHEN continues WITHOUT kstuff
+          // (FTP, Toolbox, plugins all work; only FPKG/homebrew payload features off)
+          klog_puts("kstuff failed after retries, continuing without kstuff\n");
+          notify("kstuff failed to load (L92 safe mode): FTP/Toolbox OK, FPKG disabled");
+      }
+
+      if (cleanup_kstuff && kstuff_loaded_ok) {
+          free(kstuff_address);
       }
   }
   sleep(1);
