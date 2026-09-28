@@ -44,7 +44,7 @@
         </setting_list>
 
         <!-- Kstuff (L92 : ton build fpkg est embarqué) -->
-        <setting_list id="id_kstuff_opts" title="Kstuff Menu" initial_focus_to="id_pause_kstuff">
+        <setting_list id="id_kstuff_opts" title="Kstuff Menu (L92)" second_title="kstuff-PKGs By L92 — FPKG &amp; cheat engine settings" initial_focus_to="id_pause_kstuff" icon="//user//data//etaHEN//assets//l92_icons//L92_kstuff.png">
             <list id="id_pause_kstuff" title="Pause Kstuff" second_title="Pausing kstuff will greatly improve overrall system performance but FPKGs will NOT work" confirm="PS4 FPKGs, PS5 FGs and any FPKG Homebrew apps will NOT work once paused depending on the option selected" confirm_phrase="OK, Cancel" >
               <list_item id="id_pause_kstuff_1" title="Not Paused" value="0"/>
               <list_item id="id_pause_kstuff_2" title="PS5 sysentvec Only" value="1"/>
@@ -126,7 +126,7 @@
 
     </setting_list>
 
-    <link id="id_ps5_backups" title="(Beta) PS5 webMAN Games" second_title="Games must be in either /data/etaHEN/games and/or etaHEN/games on USB root" icon="//user//data//etaHEN//assets//webMAN.png" file="hb_loader.xml"/>
+    <link id="id_ps5_backups" title="(Beta) PS5 webMAN Games" second_title="Games must be in either /data/etaHEN/games and/or etaHEN/games on USB root" icon="//user//data//etaHEN//assets//l92_icons//L92_games.png" file="hb_loader.xml"/>
 
     <!--  <link id="id_ps5_plapps" title="(Beta) Payload Homebrew Apps" second_title="Homebrew must be in either /data/homebrew and/or homebrew on USB root" file="plapps.xml"/> -->
 

@@ -286,6 +286,55 @@ const char json_payload[] =
  extern const unsigned int sicon_size;
  extern uint8_t webman_icon_start[];
  extern const unsigned int webman_icon_size;
+ // L92 Edition toolbox icons (incbin'ed in daemon.c)
+ extern uint8_t l92_main_png_start[];
+ extern const unsigned int l92_main_png_size;
+ extern uint8_t l92_pkg_png_start[];
+ extern const unsigned int l92_pkg_png_size;
+ extern uint8_t l92_plugins_png_start[];
+ extern const unsigned int l92_plugins_png_size;
+ extern uint8_t l92_cheats_png_start[];
+ extern const unsigned int l92_cheats_png_size;
+ extern uint8_t l92_remote_png_start[];
+ extern const unsigned int l92_remote_png_size;
+ extern uint8_t l92_services_png_start[];
+ extern const unsigned int l92_services_png_size;
+ extern uint8_t l92_settings_png_start[];
+ extern const unsigned int l92_settings_png_size;
+ extern uint8_t l92_kstuff_png_start[];
+ extern const unsigned int l92_kstuff_png_size;
+ extern uint8_t l92_games_png_start[];
+ extern const unsigned int l92_games_png_size;
+ extern uint8_t l92_store_png_start[];
+ extern const unsigned int l92_store_png_size;
+ extern uint8_t l92_testkit_png_start[];
+ extern const unsigned int l92_testkit_png_size;
+ extern uint8_t l92_shortcuts_png_start[];
+ extern const unsigned int l92_shortcuts_png_size;
+ extern uint8_t l92_about_png_start[];
+ extern const unsigned int l92_about_png_size;
+
+ struct l92_icon {
+   const char *name;
+   uint8_t *data;
+   const unsigned int *size;
+ };
+
+ static const struct l92_icon l92_icons[] = {
+   {"L92_main.png", l92_main_png_start, &l92_main_png_size},
+   {"L92_pkg.png", l92_pkg_png_start, &l92_pkg_png_size},
+   {"L92_plugins.png", l92_plugins_png_start, &l92_plugins_png_size},
+   {"L92_cheats.png", l92_cheats_png_start, &l92_cheats_png_size},
+   {"L92_remote.png", l92_remote_png_start, &l92_remote_png_size},
+   {"L92_services.png", l92_services_png_start, &l92_services_png_size},
+   {"L92_settings.png", l92_settings_png_start, &l92_settings_png_size},
+   {"L92_kstuff.png", l92_kstuff_png_start, &l92_kstuff_png_size},
+   {"L92_games.png", l92_games_png_start, &l92_games_png_size},
+   {"L92_store.png", l92_store_png_start, &l92_store_png_size},
+   {"L92_testkit.png", l92_testkit_png_start, &l92_testkit_png_size},
+   {"L92_shortcuts.png", l92_shortcuts_png_start, &l92_shortcuts_png_size},
+   {"L92_about.png", l92_about_png_start, &l92_about_png_size},
+ };
  
  /******************************************************************************
   * Global Variables
@@ -350,6 +399,24 @@ static void cleanup(void);
         close(fd);
   //  }
 #endif
+
+    // L92 Edition: install toolbox icons to /data/etaHEN/assets/l92_icons/
+    // (placed first: these must ship even if later asset writes bail out)
+    mkdir("/data/etaHEN/assets/l92_icons/", 0777);
+    for (unsigned int i = 0; i < sizeof(l92_icons) / sizeof(l92_icons[0]); i++) {
+      char path[256];
+      snprintf(path, sizeof(path), "/data/etaHEN/assets/l92_icons/%s", l92_icons[i].name);
+      // always refresh the L92 icons so toolbox updates ship without manual FTP
+      int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+      if (fd == -1) {
+        perror("open failed");
+        continue;
+      }
+      if (write(fd, l92_icons[i].data, *l92_icons[i].size) == -1) {
+        perror("write failed");
+      }
+      close(fd);
+    }
 
     if (!if_exists("/data/etaHEN/assets/store.png")) {
       int fd = open("/data/etaHEN/assets/store.png", O_WRONLY | O_CREAT | O_TRUNC, 0666);
