@@ -31,22 +31,27 @@ jobs:
           git clone --depth 1 https://github.com/PS5Dev/PS5SDK.git /tmp/PS5SDK-git
           # Headers ps5/, libc++, crt, libs depuis le pacbrew SDK (v0.30.2, époque etaHEN 2.5B)
           wget -q https://github.com/ps5-payload-dev/pacbrew-repo/releases/download/v0.30.2/ps5-payload-dev.tar.gz
-          tar tzf ps5-payload-dev.tar.gz | head -1 >/dev/null
 
           mkdir -p /opt/hybrid-sdk
           cp -r /tmp/PS5SDK-git/* /opt/hybrid-sdk/
-          # Superposer le contenu target/ du pacbrew (ps5 headers, c++/v1, crt, libs)
           tar xf ps5-payload-dev.tar.gz -C /tmp
+          # Superposer le contenu target/ du pacbrew (ps5 headers, c++/v1, crt, libs)
           cp -r /tmp/opt/ps5-payload-sdk/target/include/* /opt/hybrid-sdk/include/
           cp -r /tmp/opt/ps5-payload-sdk/target/lib/* /opt/hybrid-sdk/lib/ 2>/dev/null || true
           # ps5/ headers aussi à la racine (certains includes utilisent "ps5/payload.h")
           mkdir -p /opt/hybrid-sdk/ps5
           cp -r /tmp/opt/ps5-payload-sdk/target/include/ps5/* /opt/hybrid-sdk/ps5/ 2>/dev/null || true
 
+          # Patch toolchain : injecter libc++ (-nostdinc++ le désactive) + libs C++ au link
+          TC=/opt/hybrid-sdk/cmake/toolchain-ps5.cmake
+          sed -i 's|-nostdinc++ |-nostdinc++ -isystem /opt/hybrid-sdk/include/c++/v1 |' "$TC"
+          sed -i 's|set(CMAKE_EXE_LINKER_FLAGS "-fuse-ld=lld|set(CMAKE_EXE_LINKER_FLAGS "-fuse-ld=lld -L/opt/hybrid-sdk/lib -lc++ -lc++abi|' "$TC"
+
           ls /opt/hybrid-sdk
           test -f /opt/hybrid-sdk/cmake/toolchain-ps5.cmake
           test -f /opt/hybrid-sdk/include/ps5/payload.h
           test -f /opt/hybrid-sdk/include/c++/v1/cstdint
+          test -f /opt/hybrid-sdk/lib/libc++.a
 
       - name: Build
         shell: bash
