@@ -54,7 +54,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DPS5_PAYLOAD_SDK=/opt/ps5-payload-sdk \
             -DV_FW="$V_FW"
-          cmake --build build --parallel
+          cmake --build SourceCode/build --parallel
 
       - name: Collect artifacts
         run: |
