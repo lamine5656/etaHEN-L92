@@ -1237,24 +1237,21 @@ int main(void) {
   if (!dont_load_kstuff && sys_ver.version >= 0x3000000) {
       //notify("Loading kstuff ...");
 
-      // L92 Edition: defensive kstuff loading - retry up to 3 times with backoff
-      // to ride out transient FW/timing race conditions instead of failing hard.
+      // L92 Edition: single-shot validated kstuff load. No retry loop, no
+      // degraded fallback: the ELF is checked before spawning, then we wait
+      // for the load canary. If it fails, tell the user to reboot - never
+      // continue half-loaded.
       bool kstuff_loaded_ok = false;
       bool cleanup_kstuff = false;
       uint8_t* kstuff_address = get_kstuff_address(cleanup_kstuff);
 
-      for (int attempt = 1; attempt <= 3 && !kstuff_loaded_ok; attempt++) {
-          if (attempt > 1) {
-              klog_printf("kstuff load retry attempt %d/3 ...\n", attempt);
-              sleep(2 * attempt); // backoff 4s, 6s
-          }
-
+      if (is_elf_header(kstuff_address)) {
           if (elfldr_spawn("/", STDOUT_FILENO, kstuff_address, "kstuff")) {
               int wait = 0;
               bool kstuff_not_loaded = false;
               sleep(1);
               while ((kstuff_not_loaded = sceKernelMprotect(&buz[0], 100, 0x7) < 0)) {
-                  if (wait++ > 15) { // L92: 15s (was 10s) - slow FW boot tolerance
+                  if (wait++ > 20) { // 20s canary wait for slow FW boot
                       break;
                   }
                   sleep(1);
@@ -1264,14 +1261,19 @@ int main(void) {
                   kstuff_loaded_ok = true;
                   klog_puts("kstuff loaded");
               }
+          } else {
+              klog_puts("kstuff elfldr_spawn failed\n");
           }
+      } else {
+          klog_puts("kstuff ELF header invalid, refusing to spawn\n");
+          notify("kstuff image invalid - reboot and rerun etaHEN");
       }
 
       if (!kstuff_loaded_ok) {
-          // L92 Edition: graceful degradation - etaHEN continues WITHOUT kstuff
-          // (FTP, Toolbox, plugins all work; only FPKG/homebrew payload features off)
-          klog_puts("kstuff failed after retries, continuing without kstuff\n");
-          notify("kstuff failed to load (L92 safe mode): FTP/Toolbox OK, FPKG disabled");
+          // No silent degradation: etaHEN without kstuff is half-functional,
+          // a clean reboot gives the load a fresh deterministic start.
+          klog_puts("kstuff failed to load, recommend reboot\n");
+          notify("kstuff failed to load - reboot the PS5 and run etaHEN again");
       }
 
       if (cleanup_kstuff && kstuff_loaded_ok) {
