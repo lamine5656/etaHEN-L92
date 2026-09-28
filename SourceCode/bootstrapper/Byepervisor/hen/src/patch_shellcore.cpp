@@ -71,7 +71,7 @@ int proc_rw_mem(void *p, off_t procAddr, size_t sz, void *kAddr, size_t *ioSz, i
     _uio.uio_resid = sz;
     _uio.uio_segflg = UIO_SYSSPACE;
     _uio.uio_rw = (write) ? UIO_WRITE : UIO_READ;
-    _uio.uio_td = (void *)curthread;
+    _uio.uio_td = (struct thread *)curthread;  // SDK types uio_td as struct thread*
 
     // Read/Write memory (ignoring faults)
     // printf("debug_rwmem: try\n");
