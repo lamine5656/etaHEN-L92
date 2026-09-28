@@ -1,0 +1,5 @@
+old versions/
+etaHEN-*.bin
+*.elf.lzma
+*.elf.lzma.size
+bin/
